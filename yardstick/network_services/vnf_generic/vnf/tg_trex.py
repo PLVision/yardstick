@@ -15,6 +15,8 @@
 import datetime
 import logging
 import os
+import string
+import random
 
 import yaml
 
@@ -38,18 +40,27 @@ class TrexDpdkVnfSetupEnvHelper(DpdkVnfSetupEnvHelper):
 
 class TrexResourceHelper(ClientResourceHelper):
 
-    CONF_FILE = '/tmp/trex_cfg.yaml'
     QUEUE_WAIT_TIME = 1
     RESOURCE_WORD = 'trex'
     RUN_DURATION = 0
 
-    ASYNC_PORT = 4500
-    SYNC_PORT = 4501
-
     def __init__(self, setup_helper):
         super(TrexResourceHelper, self).__init__(setup_helper)
+        # TODO: get TG name, e.g. tg__0, trafficgen_1 and format the cfg file name
+        self.cfg_id = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+        self.cfg_file = '/tmp/trex_cfg_{}.yaml'.format(self.cfg_id)
         self.port_map = {}
         self.dpdk_to_trex_port_map = {}
+
+    @property
+    def sync_port(self):
+        tg_config = self.vnfd_helper.mgmt_interface['tg-config']
+        return int(tg_config['zmq_pub_port'])
+
+    @property
+    def async_port(self):
+        tg_config = self.vnfd_helper.mgmt_interface['tg-config']
+        return int(tg_config['zmq_rpc_port'])
 
     def generate_cfg(self):
         port_names = self.vnfd_helper.port_pairs.all_ports
@@ -78,16 +89,26 @@ class TrexResourceHelper(ClientResourceHelper):
             })
             self.port_map[port_name] = index
             self.dpdk_to_trex_port_map[port_num] = index
+
+        port_limit = len(port_names)
+        if len(vpci_list) & 0x01:
+            # odd number of ports, add dummy
+            vpci_list.append('dummy')
+            port_limit += 1
+
         trex_cfg = {
             'interfaces': vpci_list,
             'port_info': port_list,
-            "port_limit": len(port_names),
+            "port_limit": port_limit,
             "version": '2',
+            "zmq_pub_port": self.sync_port,
+            "zmq_rpc_port": self.async_port,
+            "prefix" : self.cfg_id
         }
         cfg_file = [trex_cfg]
 
         cfg_str = yaml.safe_dump(cfg_file, default_flow_style=False, explicit_start=True)
-        self.ssh_helper.upload_config_file(os.path.basename(self.CONF_FILE), cfg_str)
+        self.ssh_helper.upload_config_file(os.path.basename(self.cfg_file), cfg_str)
 
     def _build_ports(self):
         super(TrexResourceHelper, self)._build_ports()
@@ -101,7 +122,7 @@ class TrexResourceHelper(ClientResourceHelper):
         return self.port_map[intf]
 
     def check_status(self):
-        status, _, _ = self.ssh_helper.execute("sudo lsof -i:%s" % self.SYNC_PORT)
+        status, _, _ = self.ssh_helper.execute("sudo lsof -i:%s" % self.sync_port)
         return status
 
     # temp disable
@@ -131,10 +152,11 @@ class TrexResourceHelper(ClientResourceHelper):
         # positional arguments is a bug. This function definition doesn't work
         # in Python 2, although it works in Python 3. Reference:
         # https://www.python.org/dev/peps/pep-3102/
-        cmd = "sudo fuser -n tcp {0.SYNC_PORT} {0.ASYNC_PORT} -k > /dev/null 2>&1"
+
+        cmd = "sudo fuser -n tcp {0.sync_port} {0.async_port} -k > /dev/null 2>&1"
         self.ssh_helper.execute(cmd.format(self))
 
-        self.ssh_helper.execute("sudo pkill -9 rex > /dev/null 2>&1")
+        #self.ssh_helper.execute("sudo pkill -9 rex > /dev/null 2>&1")
 
         # We MUST default to 1 because TRex won't work on single-queue devices with
         # more than one core per port
@@ -148,7 +170,7 @@ class TrexResourceHelper(ClientResourceHelper):
         path = get_nsb_option("trex_path", trex_path)
 
         cmd = "./t-rex-64 --no-scapy-server -i -c {} --cfg '{}'".format(threads_per_port,
-                                                                        self.CONF_FILE)
+                                                                        self.cfg_file)
 
         if self.scenario_helper.options.get("trex_server_debug"):
             # if there are errors we want to see them
@@ -163,7 +185,7 @@ class TrexResourceHelper(ClientResourceHelper):
     def terminate(self):
         super(TrexResourceHelper, self).terminate()
         cmd = "sudo fuser -n tcp %s %s -k > /dev/null 2>&1"
-        self.ssh_helper.execute(cmd % (self.SYNC_PORT, self.ASYNC_PORT))
+        self.ssh_helper.execute(cmd % (self.sync_port, self.async_port))
 
     def _get_samples(self, ports, port_pg_id=None):
         stats = self.get_stats(ports)

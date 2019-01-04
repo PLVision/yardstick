@@ -1,0 +1,55 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+vnfd:vnfd-catalog:
+    vnfd:
+    -   id: TrexTrafficGenRFC  # nsb class mapping
+        name: trexverifier
+        short-name: trexverifier
+        description: TRex stateless traffic verifier
+        mgmt-interface:
+            tg-config:
+                {% if tg_config.zmq_pub_port is defined %}
+                zmq_pub_port: {{ tg_config.zmq_pub_port }}
+                {% else %}
+                zmq_pub_port: 4500
+                {% endif %}
+                {% if tg_config.zmq_rpc_port is defined %}
+                zmq_rpc_port: {{ tg_config.zmq_rpc_port }}
+                {% else %}
+                zmq_rpc_port: 4501
+                {% endif %}
+            vdu-id: trexgen-baremetal
+            {% if user is defined %}
+            user: '{{user}}'  # Value filled by vnfdgen
+            {% endif %}
+            {% if password is defined %}
+            password: '{{password}}'  # Value filled by vnfdgen
+            {% endif %}
+            {% if ip is defined %}
+            ip: '{{ip}}'  # Value filled by vnfdgen
+            {% endif %}
+            {% if key_filename is defined %}
+            key_filename: '{{key_filename}}'  # Value filled by vnfdgen
+            {% endif %}
+        vdu:
+        -   id: trexgen-baremetal
+            name: trexgen-baremetal
+            description: TRex stateless traffic verifier
+        benchmark:
+            kpi:
+                - rx_throughput_fps
+                - tx_throughput_fps
+                - tx_throughput_mbps
+                - rx_throughput_mbps
+                - in_packets
+                - out_packets

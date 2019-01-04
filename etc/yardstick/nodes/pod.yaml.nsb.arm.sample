@@ -1,0 +1,68 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+nodes:
+-
+    name: tg_0
+    role: tg__0
+    ip: 172.20.6.210
+    user: root
+    password: root
+    tg_config:
+        zmq_pub_port    : 4500
+        zmq_rpc_port    : 4501
+    interfaces:
+        xe0:  # logical name from topology.yaml and vnfd.yaml
+            vpci:      "0000:02:00.0"
+            driver:    i40e
+            dpdk_port_num: 0
+            local_ip: "152.16.100.20"
+            netmask:   "255.255.255.0"
+            local_mac:   "3c:fd:fe:9e:7d:1c"
+-
+    name: tg_1
+    role: tg__1
+    ip: 172.20.6.210
+    user: root
+    password: root
+    tg_config:
+        zmq_pub_port    : 4700
+        zmq_rpc_port    : 4701
+    interfaces:
+        xe0:  # logical name from topology.yaml and vnfd.yaml
+            vpci:      "0000:03:00.0"
+            driver:    ixgbe
+            dpdk_port_num: 1
+            local_ip: "152.16.40.19"
+            netmask:   "255.255.255.0"
+            local_mac:   "a0:36:9f:bd:5a:88"
+-
+    name: vnf_0
+    role: vnf__0
+    ip: 1.1.1.1
+    user: root
+    password: root
+    interfaces:
+        xe0:  # logical name from topology.yaml and vnfd.yaml
+            vpci:      "0000:03:00.0"
+            driver:    ixgbe
+            dpdk_port_num: 0
+            local_ip: "152.16.100.21"
+            netmask:   "255.255.255.0"
+            local_mac:   "a0:36:9f:bd:5a:88"
+        xe1:  # logical name from topology.yaml and vnfd.yaml
+            vpci:      "0000:02:00.0"
+            driver:    i40e
+            dpdk_port_num: 1
+            local_ip: "152.16.40.21"
+            netmask:   "255.255.255.0"
+            local_mac:   "3c:fd:fe:9e:7d:1c"

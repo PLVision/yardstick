@@ -223,7 +223,7 @@ class DpdkVnfSetupEnvHelper(SetupEnvHelper):
 
     def setup_vnf_environment(self):
         self._setup_dpdk()
-        self.kill_vnf()
+        #self.kill_vnf()
         # bind before _setup_resources so we can use dpdk_port_num
         self._detect_and_bind_drivers()
         resource = self._setup_resources()
@@ -366,8 +366,6 @@ class ClientResourceHelper(ResourceHelper):
 
     RUN_DURATION = 60
     QUEUE_WAIT_TIME = 5
-    SYNC_PORT = 1
-    ASYNC_PORT = 2
 
     def __init__(self, setup_helper):
         super(ClientResourceHelper, self).__init__(setup_helper)
@@ -470,8 +468,11 @@ class ClientResourceHelper(ResourceHelper):
 
     def _connect(self, client=None):
         if client is None:
+            tg_config = self.vnfd_helper.mgmt_interface['tg-config']
             client = STLClient(username=self.vnfd_helper.mgmt_interface["user"],
                                server=self.vnfd_helper.mgmt_interface["ip"],
+                               sync_port=tg_config['zmq_rpc_port'],
+                               async_port=tg_config['zmq_pub_port'],
                                verbose_level=LoggerApi.VERBOSE_QUIET)
 
         # try to connect with 5s intervals, 30s max
@@ -800,7 +801,7 @@ class SampleVNF(GenericVNF):
         self.ssh_helper.drop_connection()
         cmd = self._build_config()
         # kill before starting
-        self.setup_helper.kill_vnf()
+        #self.setup_helper.kill_vnf()
 
         LOG.debug(cmd)
         self._build_run_kwargs()

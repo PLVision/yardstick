@@ -1,0 +1,20 @@
+---
+schema: "yardstick:suite:0.1"
+
+name: "vfw_baremetal_rfc2544_ipv4_1rule_1flow"
+test_cases_dir: "samples/vnf_samples/nsut/agnostic"
+test_cases:
+-
+  file_name: tc_baremetal_rfc2544_ipv4_1rule_1flow_64B_trex_arm.yaml
+-
+  file_name: tc_baremetal_rfc2544_ipv4_1rule_1flow_128B_trex_arm.yaml
+-
+  file_name: tc_baremetal_rfc2544_ipv4_1rule_1flow_256B_trex_arm.yaml
+-
+  file_name: tc_baremetal_rfc2544_ipv4_1rule_1flow_512B_trex_arm.yaml
+-
+  file_name: tc_baremetal_rfc2544_ipv4_1rule_1flow_1024B_trex_arm.yaml
+-
+  file_name: tc_baremetal_rfc2544_ipv4_1rule_1flow_1280B_trex_arm.yaml
+-
+  file_name: tc_baremetal_rfc2544_ipv4_1rule_1flow_1518B_trex_arm.yaml
